@@ -1,0 +1,98 @@
+1.动态地给一个对象添加一些额外的职责。就增加功能来说，Decorator模式相比生成子类更为灵活。
+
+OO原则：动态地将责任附加到对象上。想要扩展功能，装饰者提供有别于继承的另一种选择。
+
+要点： 
+1、继承属于扩展形式之一，但不见得是达到弹性设计的最佳方案。 
+2、在我们的设计中，应该允许行为可以被扩展，而不须修改现有的代码。 
+3、组合和委托可用于在运行时动态地加上新的行为。 
+4、除了继承，装饰者模式也可以让我们扩展行为。 
+5、装饰者模式意味着一群装饰者类，这些类用来包装具体组件。 
+6、装饰者类反映出被装饰的组件类型（实际上，他们具有相同的类型，都经过接口或继承实现）。 
+7、装饰者可以在被装饰者的行为前面与/或后面加上自己的行为，甚至将被装饰者的行为整个取代掉，而达到特定的目的。 
+8、你可以有无所数个装饰者包装一个组件。 
+9、装饰者一般对组建的客户是透明的，除非客户程序依赖于组件的具体类型。 
+10、装饰者会导致设计中出现许多的小对象，如果过度使用，会让程序变得很复杂。
+
+二、从java.io包看装饰模式
+
+转自：http://tanshenghui.javaeye.com/blog/618724
+
+＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝＝
+
+可从IO的类层次，IO框架的设计模式来论述。 
+
+总体来说，IO可以分为字节流和字符流，不同在于字符流由字节流包装而来，在IO读入之后经过JVM处理，把字节流转换成字符流。而字符流的字符采用哪种字符编码实现由JVM默认编码决定。 
+而每个流都分输入和输出，所以，总体来说，IO有四个顶层类： 
+InputStream 
+OutputStream 
+Reader 
+Writer 
+
+而作为机器级别与机器交互的则是字节流： 
+InputStream 
+OutputStream 
+
+以IO的中间类，进行字节流到字符流的转换过渡，通常可作为字符流类的构造参数，可指定编码： 
+InputStreamReader 
+OutputStreamWriter 
+
+而字节流和字符流的缓冲容器来看有byte和char之分，所以派生出： 
+ByteArrayInputStream 
+ByteArrayOutputStream 
+CharArrayInputStream 
+CharArrayOutputStream 
+
+以上类只是表示流的表示形式，而在传输形式上还表现为是否有缓冲。所以，可以派生出子类为可缓冲类： 
+BufferInputStream 
+BufferOutputStream 
+BufferReader 
+BufferWriter 
+
+每一个顶层类都有对目录文件（File）的支持： 
+FileInputStream 
+FileOutputStream 
+FileReader 
+FileWriter 
+
+在Java中，一个强大的功能就是可以对对象进行序列化，转成二进制文件输出，也就是字节流输出而不是字符流输出，所以有顶层的InputStream和OutputStream派生类： 
+ObjectInputStream 
+ObjectOutputStream 
+
+流包括了节点流和过滤流，注意的是过滤流，可在读写的同时对数据进行操作，并且实现了同步操作，顶层过滤流类： 
+FilterInputStream 
+FilterOutputStream 
+其子类则在其基础上，对节点流进行封装，常见子类有： 
+BufferInputStream          BufferOutputStream 
+DataInputStream            DataOutputStream 
+LineNumberInputStream      PrintStream 
+可参考子类的构造方法。 
+
+以上IO操作几乎就是把流装载到内存中，对其进行操作的时候是顺序读写，而需要随机读写时： 
+RandomAccessFile 
+
+从整个类框架的结构实现的接口来看，顶层类： 
+InputStream implements Closable, 
+OutputStream implements Closable, Flushable 
+Reader implements Closable, Readable 
+Writer implements Closable, Flushable, Appendable 
+各个接口方法： 
+Closable: close(); 
+Flushable: flush(); 
+Readable: read(CharBuffer cb); 
+Appendable: append(); 
+从IO类使用时的规则来看，实现这些方法就是很自然的了，也是必须要实现的。如：流使用完必须关闭，流输出前必须刷新。 
+
+注意的是，这四个顶层类都没有实现Serializable接口。 
+java.io.Serializable虽然属于IO框架，但其并不是直接作用于IO框架四个顶层IO类及其子类，而是作用于其它对象，使其可被序列化，再通过IO类对其进行输入输出。如：File、ObjectStreamClass、String。
+
+Java IO 框架中主要应用了两个设计模式：装饰模式和适配器模式。 
+
+姑且就把Java IO划分为元素和行为两个部分，元素则是适配，行为则是装饰加强。 
+
+适配器模式主要在于字节流到字符流的转换和元素的包装上，如类：InputStreamReader, CharArrayReader, FileReader, PipedReader, StringReader。 
+装饰模式主要在对流的强化之中，如缓冲、过滤、行定位等，如类：BufferedReader, FilterReader, LineNumberReader。 
+
+一个典型的例子就是： 
+BufferReader br = new BufferReader(new InputStreamReader(System.in)); 
+综合了两种模式：把InputStream适配成InputStreamReader，再把InputStreamReader加强装饰城BufferedReader。
